@@ -10,15 +10,15 @@ import numpy as np
 import imutils
 from random import randint
 
-fgbg=cv2.bgsegm.createBackgroundSubtractorMOG()
-#fgbg=cv2.createBackgroundSubtractorMOG2()
+fgbg=cv2.bgsegm.createBackgroundSubtractorMOG()   #Mixture of Gaussian model which is Robust to lighting chnages,Shadows
 
-cap=cv2.VideoCapture("Home2.mp4")
 
-frame_count=0
-summarised_framecount=0
-dim=(600,600)
-first=0
+cap=cv2.VideoCapture("Home2.mp4") #Input video file name
+
+frame_count=0 #counter to count number of frames in original video
+summarised_framecount=0 #Counter to count number of frames in summarised video
+dim=(600,600) #Resizing the  frames of the video to the dimension (600,600) 
+first=0 
 while True:
     frame_count=frame_count+1
     ret,frame=cap.read()
@@ -27,27 +27,23 @@ while True:
         frame1=fgbg.apply(rframe)
         
         if first==0:
-            cv2.imwrite("photoo0.png",frame)
+            cv2.imwrite("photoo0.png",frame) #Writing the first frame of the video to the summarised output video
             first=first+1
-        frame1=cv2.GaussianBlur(frame1,(5,5),0)
-
+        
+        frame1=cv2.GaussianBlur(frame1,(5,5),0) #Smootening the noise present in the videoo frame
         kernel = np.ones((5,5),np.uint8)
-        frame1=cv2.erode(frame1,kernel,iterations=1)
+        frame1=cv2.erode(frame1,kernel,iterations=1) #Marphological operation to decrese the whitenoise in the frame
         kernel = np.ones((3,3),np.uint8)
-        frame1=cv2.dilate(frame1,kernel,iterations=1)
-#        
+        frame1=cv2.dilate(frame1,kernel,iterations=1) #Marphological operation to restore the shap of the objects present in the frame
 
-#        ret,frame1 = cv2.threshold(frame1,127,255,cv2.THRESH_TOZERO)
-#        frame1=cv2.dilate(frame1,kernel,iterations=4)
-        
-        
+        #Function which finds contours present in the frame
         cnts = cv2.findContours(frame1.copy(), cv2.RETR_EXTERNAL,
                                 cv2.CHAIN_APPROX_SIMPLE)
         cnts = cnts[0] if imutils.is_cv2() else cnts[1]  
         
-        detection_count=0
+        detection_count=0 #Counter to count number of objects prsent in the given frame
         for c in cnts:
-            if cv2.contourArea(c)<400:
+            if cv2.contourArea(c)<400: #Sensitivity measure  to ignore small objects.Increaing this value decreases the number of objects identified 
                 continue
             else :
                 detection_count=detection_count+1
@@ -58,13 +54,14 @@ while True:
             box = np.int0(box)
             
             
-            cv2.drawContours(frame1,[box],0,(255,0,0),2)
+            cv2.drawContours(frame1,[box],0,(255,0,0),2 )#drawing contours on the background subtracted frame,after all the above operations were done
             
             
-        if detection_count>0:
+        if detection_count>0: #Retaining the frame if the number of objects identified is greater than the specified number i'e is  0 in this case
             summarised_framecount=summarised_framecount+1
             cv2.imshow("summarised",frame1)
             
+            #saving the frames to your pwd(present working drectory) with names as fallows(photoo0, photoo1...)
             cv2.imwrite("photoo{}.png".format(summarised_framecount),frame)
             k=cv2.waitKey(1)
        #
